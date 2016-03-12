@@ -1,29 +1,26 @@
-MESSAGE(STATUS "\nFindSC init...")
-MESSAGE(STATUS "SC_SRC_DIR : " ${SC_SRC_DIR})
+########################################################################################
+##	SC_FOUND - Found Supercollider
+##  SC_INSTALL_DIR - Install folder of Supercollider with sclang application
+########################################################################################
+
+SET(SC_FOUND FALSE)
 
 FIND_PATH(
-    TEST_INCLUDE_DIR
-    NAMES ScBridge.h
-    #HINTS ${CMAKE_SOURCE_DIR}
-    PATHS ${CMAKE_SOURCE_DIR}/ScBridge
-    
-)
-MESSAGE(STATUS "TEST_INCLUDE_DIR : " ${TEST_INCLUDE_DIR})
-
-FIND_PATH(
-    LANG_INCLUDE_DIR
-    NAMES SC_LanguageClient.hpp
-    PATHS ${SC_SRC_DIR}/lang/LangSource
-)
-MESSAGE(STATUS "LANG_INCLUDE_DIR : " ${LANG_INCLUDE_DIR})
-
-FIND_LIBRARY(
-    LANG_LINK_DIR
-    NAMES sclang
-    HINTS ${SC_BUILD_DIR}/lang/Release/
-    PATHS ${SC_BUILD_DIR}/lang/Release/
+  SC_INSTALL_DIR
+  NAMES "sclang.exe" "sclang"
+  PATHS 
+  "C:/Supercollider/Supercollider_findModules"
+  "D:/Supercollider/Supercollider_3.7"
+  "/home/kof/src/supercollider/build"
+  PATH_SUFFIXES "Install/Supercollider"
 )
 
-MESSAGE(STATUS "LANG_LINK_DIR : " ${LANG_LINK_DIR})
+IF(SC_INSTALL_DIR)
+	SET(SC_FOUND TRUE)
+  MESSAGE(STATUS "\nSupercollider install dir found {SC_INSTALL_DIR} - " ${SC_INSTALL_DIR})
+	MARK_AS_ADVANCED(FORCE SC_INSTALL_DIR)
+ELSE()
+	MESSAGE(WARNING "Oh no, I coundn't find SuperCollider path with sclang app!")
+ENDIF()
 
-MESSAGE(STATUS "FindSC done...")
+

@@ -1,147 +1,143 @@
 #include "ScBridge.h"
-/*
-#include "main.hpp"
-#include "settings/manager.hpp"
-#include "session_manager.hpp"
-#include "util/standard_dirs.hpp"
-#include "../widgets/main_window.hpp"
-#include "../widgets/help_browser.hpp"
-#include "../widgets/lookup_dialog.hpp"
-#include "../widgets/code_editor/highlighter.hpp"
-#include "../widgets/style/style.hpp"
-#include "../../../QtCollider/hacks/hacks_mac.hpp"
-
-#include "yaml-cpp/node.h"
-#include "yaml-cpp/parser.h"
-
-#include <QAction>
-#include <QApplication>
-#include <QBuffer>
-#include <QDataStream>
-#include <QDir>
-#include <QFileOpenEvent>
-#include <QLibraryInfo>
-#include <QTranslator>
-#include <QDebug>
-*/
-
-#include "SC_LanguageClient.h"
-
-/*
-int main(int argc, char** argv){
-	SC_LanguageClient * client = createLanguageClient("sclang");
-
-	if (!client)
-		return 1;
-
-	int returnCode = client->run(argc, argv);
-
-	destroyLanguageClient(client);
-
-	return returnCode;
-}
-*/
-
-ScBridge::ScBridge()
-{
-	SC_LanguageClient * client = createLanguageClient("sclang");
-
-	/*
-	QStringList arguments(QApplication::arguments());
-	arguments.pop_front(); // application path
-
-	// Pass files to existing instance and quit
-	ScIDE::SingleInstanceGuard guard;
-	if (guard.tryConnect(arguments))
-		//return 0;
-
-	ScIDE::Main *myMain = ScIDE::Main::instance();
-	ScIDE::MainWindow *win = new ScIDE::MainWindow(myMain);
-	*/
-
-	
-
-	//ScIDE::Settings::Manager *settings = myMain->settings();
-	//ScIDE::SessionManager *sessions = myMain->sessionManager();
+#include <QtWidgets/QApplication>
 
 
-
-	//client->setCmdLine("s.boot");
-
-	//win.msgConsole(QString("ScBridge"));
-}
-/*
-QString ScBridge::getClientName()
-{
-return client->getName();
-}
-*/
-
-
-ScBridge::~ScBridge()
+namespace SupercolliderBridge
 {
 
-}
+	ScBridge::ScBridge(QObject * parent) :
+		QProcess(parent),
+		mIpcServer(new QLocalServer(this)),
+		mIpcSocket(NULL),
+		mIpcServerName("SCBridge_" + QString::number(QCoreApplication::applicationPid())),
+		mTerminationRequested(false),
+		mCompiled(false)
+	{
+		//this->startLang();
 
-/*
-void QntInstanceGuard::onNewIpcConnection()
-{
-	mIpcSocket = mIpcServer->nextPendingConnection();
-	connect(mIpcSocket, SIGNAL(disconnected()), mIpcSocket, SLOT(deleteLater()));
-	connect(mIpcSocket, SIGNAL(readyRead()), this, SLOT(onIpcData()));
-}
+		connect(this, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
+		//connect(mIpcServer, SIGNAL(newConnection()), this, SLOT(onNewIpcConnection()));
 
-void QntInstanceGuard::onIpcLog(const QString &message) {
+		//connect(this, SIGNAL(started()), this, SLOT(testStart()));
+	}
 
-}
 
-bool QntInstanceGuard::tryConnect(QStringList const & arguments)
-{
-	if (!arguments.empty()) {
-		QTcpSocket *socket = new QTcpSocket(this);
-		socket->connectToHost(QHostAddress(QHostAddress::LocalHost), QntInstanceGuard::Port);
 
-		QVariantList canonicalArguments;
-		foreach(QString path, arguments) {
-			QFileInfo info(path);
-			canonicalArguments << info.canonicalFilePath();
+	void ScBridge::startLang()
+	{
+		QString sclangCommand = "sclang";
+		QString configFile;
+
+		QStringList sclangArguments;
+		if (!configFile.isEmpty())
+			sclangArguments << "-l" << configFile;
+		sclangArguments << "-i" << "scqt";
+
+		QProcess::start(sclangCommand, sclangArguments);
+		bool processStarted = QProcess::waitForStarted();
+		if (!processStarted)
+		{
+			emit statusMessage(tr("Failed to start interpreter!"));
 		}
-
-		if (socket->waitForConnected(200)) {
-			ScIpcChannel *ipcChannel = new ScIpcChannel(socket, QString("SingleInstanceGuard"), this);
-			ipcChannel->write(QString("open"), canonicalArguments);
-
-			return true;
+		else
+		{
+			emit statusMessage(tr("Starting ScLang ..."));
+			emit bootedLang(true);
 		}
 	}
 
-	mIpcServer = new QTcpServer(this);
-	bool listening = mIpcServer->listen(QHostAddress(QHostAddress::LocalHost), QntInstanceGuard::Port);
-	if (listening) {
-		mIpcChannel = new ScIpcChannel(mIpcServer->nextPendingConnection(), QString("SingleInstanceGuard"), this);
+	void ScBridge::killLang()
+	{
+		this->killServer();
 
-		connect(mIpcServer, SIGNAL(newConnection()), this, SLOT(onNewIpcConnection()));
-		return false;
+		//evaluateCode("Server.local.quit;");
+
+		if (state() != QProcess::Running) {
+			emit statusMessage(tr("Interpreter is not running!"));
+			return;
+		}
+
+		evaluateCode("0.exit", true);
+		closeWriteChannel();
+
+		mCompiled = false;
+		mTerminationRequested = true;
+		mTerminationRequestTime = QDateTime::currentDateTimeUtc();
+
+		bool finished = waitForFinished(200);
+		if (!finished && (state() != QProcess::NotRunning)) {
+#ifdef Q_OS_WIN32
+			kill();
+#else
+			terminate();
+#endif
+			bool reallyFinished = waitForFinished(200);
+			if (!reallyFinished)
+				emit statusMessage(tr("Failed to stop interpreter!"));
+			else
+			{
+				emit statusMessage(tr("MOMENT kdy LANG umrel...."));
+				emit bootedLang(false);
+			}
+		}
+		mTerminationRequested = false;
 	}
-	return false;
+
+	void ScBridge::startServer()
+	{
+		
+		evaluateCode("Server.local = Server.default = s;");
+		evaluateCode("s.boot;");
+		evaluateCode("s.waitForBoot({ 'MOMENT kdy Server nastartoval....'.postln; })");
+		emit bootedServer(true);
+	}
+
+	void ScBridge::killServer()
+	{
+		//evaluateCode("Server.killAll;"); // not working?
+		evaluateCode("s.quit;");
+		emit bootedServer(false);
+	}
+
+	void ScBridge::evaluateCode(QString const & commandString, bool silent)
+	{
+		if (state() != QProcess::Running) {
+			emit statusMessage(tr("Interpreter is not running!"));
+			return;
+		}
+
+		QByteArray bytesToWrite = commandString.toUtf8();
+		size_t writtenBytes = write(bytesToWrite);
+		if (writtenBytes != bytesToWrite.size()) {
+			emit statusMessage(tr("Error when passing data to interpreter!"));
+			return;
+		}
+
+		char commandChar = silent ? '\x1b' : '\x0c';
+
+		emit scPost(tr("userCmd: %1").arg(commandString));
+
+		write(&commandChar, 1);
+	}
+
+	void ScBridge::onReadyRead()
+	{
+		if (mTerminationRequested) {
+			// when stopping the language, we don't want to post for longer than 200 ms to prevent the UI to freeze
+			if (QDateTime::currentDateTimeUtc().toMSecsSinceEpoch() - mTerminationRequestTime.toMSecsSinceEpoch() > 200)
+				return;
+		}
+
+		QByteArray out = QProcess::readAll();
+		QString postString = QString::fromUtf8(out);
+
+		emit scPost(postString);
+	}
+
+
+	ScBridge::~ScBridge()
+	{
+
+	}
 }
 
-void QntInstanceGuard::onIpcMessage(const QString &selector, const QVariantList &data) {
-	//if (selector == QString("open"))
-		//foreach(QVariant path, data)
-		//Main::documentManager()->open(path.toString());
-		//ScBridge::documentManager()->open(path.toString());
-}
-
-void QntInstanceGuard::onIpcData() {
-	mIpcChannel->read();
-}
-
-
-
-static inline QString getSettingsFile()
-{
-	return standardDirectory(ScConfigUserDir) + "/sc_ide_conf.yaml";
-}
-
-*/

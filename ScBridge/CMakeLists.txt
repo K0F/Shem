@@ -1,19 +1,28 @@
+PROJECT (ScBridge)
+
+CMAKE_MINIMUM_REQUIRED ( VERSION 3.4 )
+
 MESSAGE(STATUS "\nScBridge init...")
-MESSAGE(STATUS "SC_SCR_DIR : " ${SC_SRC_DIR})
 
-SET (CMAKE_PREFIX_PATH ${SC_SRC_DIR})
-MESSAGE(STATUS "CMAKE_PREFIX_PATH : " ${CMAKE_PREFIX_PATH})
+FIND_PACKAGE(Qt5Core)
+FIND_PACKAGE(Qt5Widgets)
+FIND_PACKAGE(Qt5Gui)
+FIND_PACKAGE(Qt5Network)
 
-FIND_PACKAGE(SC)
+SET(QT_LIBRARIES 
+	Qt5::Core
+	Qt5::Gui 
+	Qt5::Widgets
+	Qt5::Network
+)
 
-IF(SC_FOUND)
-	MESSAGE(STATUS "SCmodule : " ${SC_FOUND})
-ELSE()
-	MESSAGE(STATUS "SCmodule - nenalezen")
-ENDIF()
-
+SET(ScBridge_hdr ScBridge.h)
 SET(ScBridge_src ScBridge.cpp)
 
-ADD_LIBRARY(ScBridge STATIC ${ScBridge_src})
+ADD_LIBRARY(ScBridge STATIC ${ScBridge_src} ${ScBridge_hdr})
 
-MESSAGE(STATUS "\nScBridge done...")
+TARGET_LINK_LIBRARIES(ScBridge ${QT_LIBRARIES})
+
+
+
+
