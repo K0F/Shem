@@ -3,41 +3,85 @@
 namespace Jui
 {
 
-	Console::Console(QWidget *parent)
-		:QTextEdit(parent)
-	{
-		//text = new QTextEdit(this);
-		setReadOnly(true);
-		setOverwriteMode(false);
-		setFont(QFont("Consolas", 8));
+  Console::Console(QWidget *parent) : Panel(parent)
+  {
+    setObjectName("Console");
 
-		append(tr("ahoj"));
-		append(tr("zdur"));
-		//update();
+    setEdgeControler(EdgeControler::Direction::LEFT, true);
 
-		setFrameStyle(QFrame::NoFrame);
-	}
+    text = new QTextEdit(this);
+    text->setReadOnly(true);
+    text->setOverwriteMode(false);
+    text->setTabStopWidth(30);
 
-	void Console::addLine(QString newLine) { append(newLine); }
+    text->setFrameStyle(QFrame::NoFrame);
 
-	/*
-	void Console::paintEvent(QPaintEvent *event)
-	{
-	QPainter painter(this);
+//    txt.append(tr("QTextEdit { selection-background-color: %1; }").arg(colorActive.name()));
 
-	QPen frame(QColor(20, 180, 240), 1);
-	QBrush brush(QColor(125, 25, 25), Qt::SolidPattern);
+    text->append(tr("Console init..."));
 
-	painter.setPen(Qt::NoPen);
-	painter.setBrush(brush);
-	painter.drawRect(QRect(0, 0, width(), height()));
-	}
-	*/
+    QTextCharFormat format;
+    format.setForeground(QBrush(QColor(230, 30, 30)));
+    text->setCurrentCharFormat(format);
 
+    //connect(this, SIGNAL(resizeAct()), this, SLOT(fitGeometry()));
+  }
 
-	Console::~Console()
-	{
+  void Console::setFont(QFont font)
+  {
+    text->setFont(font);
+    text->verticalScrollBar()->setValue(text->verticalScrollBar()->maximum());
+    update();
+  }
 
-	}
+  void Console::setColorText(QColor color)
+  {
+    QTextCharFormat format;
+    format.setForeground(QBrush(color));
+    text->setCurrentCharFormat(format);
+  }
+
+  void Console::setColorBackground(QColor color)
+  {
+    Panel::setColorBackground(color);
+    QWidget *viewport = text->viewport();
+    QPalette palete = viewport->palette();
+    palete.setColor(viewport->backgroundRole(), color);
+    viewport->setPalette(palete);
+  }
+
+  void Console::addText(QString newText, QColor color = QColor(70, 70, 70), bool newLine = true)
+  {
+    QTextCharFormat format;
+    format.setForeground(QBrush(color, Qt::SolidPattern));
+    text->setCurrentCharFormat(format);
+
+    if (newLine) {
+      text->append(newText);
+    }
+    else
+    {
+      text->insertPlainText(newText);
+      text->verticalScrollBar()->setValue(text->verticalScrollBar()->maximum());
+    }
+
+    format.setForeground(QBrush(QColor(230, 230, 230), Qt::SolidPattern));
+    text->setCurrentCharFormat(format);
+
+  }
+
+  /*
+  void Console::fitGeometry() {
+  text->setGeometry(10, 35, this->width() - 20, this->height() - 45);
+  }
+  */
+
+  void Console::resizeEvent(QResizeEvent *event)
+  {
+    Panel::resizeEvent(event); // send event to superclass
+    text->setGeometry(10, 35, this->width() - 20, this->height() - 45);
+  }
+
+  Console::~Console()	{ }
 
 }

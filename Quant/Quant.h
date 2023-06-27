@@ -1,13 +1,19 @@
 #ifndef QUANT_H
 #define QUANT_H
 
-
 #include <QWidget>
-#include <QPushButton>
-#include <QTextEdit>
+#include <QDebug>
 
 #include "ScBridge.h"
+#include "Customize.h"
+#include "UDPServer.h"
 #include "Canvan.h"
+#include "Panel.h"
+#include "Edges.h"
+#include "CodeEditor.h"
+
+#include "NodePanel.h"
+#include "Node.h"
 
 using namespace SupercolliderBridge;
 using namespace Jui;
@@ -15,32 +21,79 @@ using namespace Jui;
 namespace QuantIDE
 {
 
-	class Quant : public Canvan
-	{
-		Q_OBJECT
-		
-	public:
-		explicit Quant(QWidget *parent = 0);
-		~Quant();
+  class Quant : public QWidget
+  {
+    Q_OBJECT
 
-	public slots:
-		void beep();
-		void pdefPlay();
-		void consoleAddMsg(QString);
+  public:
+    Quant(QWidget *parent = 0);
+    ~Quant();
 
-	protected:
-		void paintEvent(QPaintEvent *event);
-		void closeEvent(QCloseEvent *event);
+    public slots :
+    void onMsgNormal(QString);
+    void onMsgStatus(QString);
+    void onMsgEvaluate(QString);
+    void onMsgResult(QString);
+    void onMsgError(QString);
+    void onMsgWarning(QString);
+    void onMsgBundle(QString);
 
-	private:
-		void initControl();
+    void onInterpretBootInit();
+    void onInterpretBootDone();
+    void onInterpretKillInit();
+    void onInterpretKillDone();
 
-		ScBridge *bridge;
+    void onServerBootInit();
+    void onServerBootDone();
+    void onServerKillInit();
+    void onServerKillDone();
 
-		Button *buttAddNode;
+    //void onConfigDataDone();
+    void onCustomize();
 
-		
-	};
+    void fitGeometry();
+    //void onConfigData(QMap<QString, QVariant*> config);
+
+    void onServerStatus(QStringList);
+
+    void onRecivedGlobalCode(QString);
+
+    void onCloseQuant();
+
+  signals:
+    void bootInterpretAct();
+    void bootServerAct();
+    void actConfigDone();
+    void actConfigData(QMap<QString, QVariant*> config);
+    void print(QString, QColor);
+    void println(QString, QColor);
+
+  protected:
+    void closeEvent(QCloseEvent *event);
+    void paintEvent(QPaintEvent *event);
+    void customizeEvent(QDynamicPropertyChangeEvent *event);
+
+  private:
+    void initControl();
+    void initStyleSheet(); // ???? snad bude odstraneno
+
+    ScBridge *bridge;
+    Customize *customize;
+    UDPServer *udpServer;
+    Canvan *canvan;
+    NodePanel *nodePanel;
+    Panel *customizePanel, *networkPanel;
+
+    QString userName;
+    QColor colorAppBackground, colorPanelBackground, colorNormal, colorOver, colorActive, colorText;
+    QColor colorMsgNormal, colorMsgStatus, colorMsgEvaluate, colorMsgResult, colorMsgError, colorMsgWarning, colorMsgBundle;
+    QFont fontTextBig, fontTextSmall, fontTextCode;
+
+    Button *buttLang, *buttServer, *buttConsole, *buttCustomize, *buttNetwork;
+    CodeEditor *globalCode;
+
+    QLabel *labelServerMeter, *labelServerSynths, *labelServerGroups;
+  };
 }
 #endif // QUANT
 

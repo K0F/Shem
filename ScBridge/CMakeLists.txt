@@ -16,10 +16,20 @@ SET(QT_LIBRARIES
 	Qt5::Network
 )
 
-SET(ScBridge_hdr ScBridge.h)
-SET(ScBridge_src ScBridge.cpp)
+SET(ScBridge_hdr 
+  ScBridge.h
+  Customize.h
+  UDPServer.h
+)
+SET(ScBridge_src 
+  ScBridge.cpp
+  Customize.cpp
+  UDPServer.cpp
+)
 
-ADD_LIBRARY(ScBridge STATIC ${ScBridge_src} ${ScBridge_hdr})
+QT5_WRAP_CPP( ScBridge_moc ${ScBridge_hdr} )
+
+ADD_LIBRARY(ScBridge STATIC ${ScBridge_src} ${ScBridge_hdr} ${ScBridge_moc})
 
 TARGET_LINK_LIBRARIES(ScBridge ${QT_LIBRARIES})
 

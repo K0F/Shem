@@ -1,149 +1,216 @@
 #include "Button.h"
+
+#include "string.h"
+
 namespace Jui
 {
 
-	Button::Button(QWidget *parent)
-		: QWidget(parent)
-	{
-		isPressed = false;
-		isOver = false;
+  Button::Button(QWidget *parent) : QWidget(parent)
+  {
+    buttonState = OFF;
+    buttonDisplay = NORMAL;
+    buttonKeeping = TOUCH;
 
-		name = new QString();
-		iconPath = QString();
+    name = "button";
+    isPressed = false;
+    isOver = false;
 
-		backgroundAlpha = 0;
-		fadeTimeIn = 1000;
-		fadeTimeOut = 250;
-		fps = 25;
+    iconOffset = 0;
 
-		timer = new QTimer(this);
-		connect(timer, SIGNAL(timeout()), this, SLOT(alphaUpdate()));
-	}
+    ratio = 0;
+    //backgroundAlpha = 0;
+    fadeTimeIn = 150;
+    fadeTimeOut = 800;
+    fps = 25;
 
-	void Button::setName(QString buttonName)
-	{
-		*name = buttonName;
-	}
+    timer = new QTimer(this);
 
-	QRectF Button::boundingRect() const
-	{
-		return QRectF(1.5, 1.5, width() - 3, height() - 3);
-	}
+    connect(timer, SIGNAL(timeout()), this, SLOT(fadeRatio()));
+  }
 
-	void Button::alphaUpdate()
-	{
-		if (isOver)
-		{
-			if (backgroundAlpha >= 255)
-			{
-				timer->stop();
-				backgroundAlpha = 255;
-			}
-			else
-			{
-				backgroundAlpha += 255 / fps;
-			}
-		}
-		else
-		{
-			if (backgroundAlpha <= 0)
-			{
-				timer->stop();
-				backgroundAlpha = 0;
-			}
-			else
-			{
-				backgroundAlpha -= 255 / fps;
-			}
-		}
-		update();
-	}
+  QRect Button::bounds() { return QRect(1, 1, width() - 2, height() - 2); }
+
+  void Button::setText(QString buttonName) { name = buttonName; }
+  void Button::setFont(QFont font) { fontText = font;	update(); }
+  void Button::setIcon(QImage img, int offset = 0) { icon = img; iconOffset = offset; }
+  void Button::setColorNormal(QColor color){ normalColor = color; penColor = normalColor; update(); }
+  void Button::setColorOver(QColor color){ overColor = color; update(); }
+  void Button::setColorActive(QColor color){ activeColor = color; update(); }
+  void Button::setState(State newState) { buttonState = newState; update(); }
+  void Button::setStateKeeping(StateKeeping mode) { buttonKeeping = mode; }
+  void Button::setButtonGroup(QList<Button*> others)
+  {
+    foreach(Button *oneB, others)
+    {
+      if (oneB != this)
+      {
+        connect(oneB, SIGNAL(pressAct()), this, SLOT(onSwitchOFF()));
+      }
+    }
+  }
+
+  void Button::onSwitchOFF()
+  {
+    if (buttonKeeping == SWITCH)
+    {
+      buttonState = OFF;
+      this->update();
+    }
+  }
 
 
-	void Button::paintEvent(QPaintEvent *)
-	{
-		QPainter painter(this);
-		QRectF rect = boundingRect();
+  void Button::fadeRatio()
+  {
+    if (isOver)
+    {
+      ratio += 1.0 / fps;
+      if (ratio >= 1)
+      {
+        timer->stop();
+        ratio = 1;
+      }
+    }
+    else
+    {
+      ratio -= 1.0 / fps;
+      if (ratio <= 0)
+      {
+        timer->stop();
+        ratio = 0;
+      }
+    }
+    //qDebug() << tr("buttonAlpha %1").arg(QString::number(ratio));
+    update();
+  }
 
-		QPen *pen;
-		if (isPressed){
+  QColor Button::blendColor(QColor color1, QColor color2, double ratio)
+  {
+    int r = color1.red()*(1 - ratio) + color2.red()*ratio;
+    int g = color1.green()*(1 - ratio) + color2.green()*ratio;
+    int b = color1.blue()*(1 - ratio) + color2.blue()*ratio;
 
-			pen = new QPen(Qt::red, 3);
-		}
-		else
-		{
-			if (isOver){
-				pen = new QPen(Qt::white, 3);
-			}
-			else
-			{
-				pen = new QPen(Qt::white, 1);
-			}
-		}
-		if (!iconPath.isNull()){
-			pen = new QPen(Qt::NoPen);
+    return QColor(r, g, b, 255);
+  }
 
-			QRectF target(0, 0, width(), height());
-			QRectF source(0, 0, 128, 128);
-			QImage image(iconPath);
-			painter.drawImage(target, image, source);
-		}
+  void Button::paintEvent(QPaintEvent *event)
+  {
+    QPainter painter(this);
+    painter.setFont(fontText);
 
+    penColor = blendColor(normalColor, overColor, ratio);
+    painter.setPen(QPen(penColor, 1));
 
-		painter.setPen(*pen);
-		painter.setBrush(QBrush(QColor(120, 20, 20, backgroundAlpha), Qt::SolidPattern));
-		painter.drawRect(boundingRect());
+    if (icon.isNull())
+    {
+      switch (buttonState)
+      {
+      case ON:
+        fillColor = activeColor;
+        break;
+      case OFF:
+        fillColor = Qt::transparent;;
+        break;
+      }
+      painter.fillRect(bounds(), fillColor);
 
-		painter.drawText(10, 15, QString::number(backgroundAlpha));
-	}
+      QTextOption opt;
+      opt.setAlignment(Qt::AlignCenter);
+      painter.drawText(bounds(), name, opt);
+      painter.drawRect(bounds());
+    }
+    else
+    {
+      if (buttonState == ON) { penColor = activeColor; };
+      float moveX = (this->width() - icon.width()) / 2;
+      float moveY = (this->height() - icon.height()) / 2;
 
-	void Button::mousePressEvent(QMouseEvent *event)
-	{
-		isPressed = true;
-		update();
-		//QWidget::mousePressEvent(event);
+      QRectF target(moveX, moveY, icon.width(), icon.height());
+      QRectF source(0, 0, icon.width(), icon.height());
 
-		float time = 1.5;
-		int frames = 10;
-		float stepTime = time / frames;
-		float stemAdd = 1 / frames;
+      QImage renderedIcon(icon);
+      renderedIcon.fill(penColor);
+      renderedIcon.setAlphaChannel(icon);
+      painter.drawImage(target, renderedIcon, source);  // draw image to QWidget
+    };
+  }
 
-		//timer->start(stepTime);
+  void Button::mousePressEvent(QMouseEvent *mouseEvent)
+  {
+    isPressed = true;
 
-		emit pressAct();
+    switch (buttonState)
+    {
+    case OFF: buttonState = ON; /*qDebug("Button STATE(ON)");*/ break;
+    case ON: buttonState = OFF;	/*qDebug("Button STATE(OFF)");*/ break;
+    };
 
-		qDebug() << "Press"; // Or whatever
-	}
+    buttonDisplay = PRESSED; /*qDebug("Button Display(PRESSED)");*/
 
-	void Button::mouseReleaseEvent(QMouseEvent *event)
-	{
-		isPressed = false;
-		update();
-		QWidget::mouseReleaseEvent(event);
-	}
+    update();
 
-	void Button::enterEvent(QEvent *event)
-	{
-		timer->stop();
-		timer->setInterval(fadeTimeIn / fps);
-		timer->start();
+    float time = 1.5;
+    int frames = 10;
+    float stepTime = time / frames;
+    float stemAdd = 1 / frames;
 
-		isOver = true;
-		emit enterAct(tr("Button_EnterAct [%1]").arg(*name));
-	}
+    emit actPressed(buttonState);
+    emit pressAct();
+    //qDebug() << "Button (%1) pressed" << name;
+    mouseEvent->accept();
+  }
 
-	void Button::leaveEvent(QEvent *event)
-	{
-		timer->stop();
-		timer->setInterval(fadeTimeOut / fps);
-		timer->start();
+  void Button::mouseReleaseEvent(QMouseEvent *mouseEvent)
+  {
+    isPressed = false;
 
-		isOver = false;
-		emit leaveAct(tr("Button_LeaveAct [%1]").arg(*name));
-	}
+    if (buttonKeeping == TOUCH)
+    {
+      //qDebug("Button Keeping(TOUCH)");
+      switch (buttonState)
+      {
+      case ON: buttonState = OFF;	/*qDebug("Button STATE(OFF)");*/ break;
+      case OFF: buttonState = ON;/* qDebug("Button STATE(ON)");*/ break;
+      };
+    }
 
-	Button::~Button()
-	{
+    switch (buttonState)
+    {
+    case ON: buttonDisplay = PRESSED; /*qDebug("Button Display(PRESSED)");*/ break;
+    case OFF: buttonDisplay = OVER; /*qDebug("Button Display(OVER)");*/ break;
+    }
 
-	}
+    update();
+    mouseEvent->accept();
+  }
+
+  void Button::enterEvent(QEvent *event)
+  {
+    timer->stop();
+    timer->setInterval(fadeTimeIn / fps);
+    timer->start();
+
+    isOver = true;
+    buttonDisplay = OVER;
+    //qDebug("Button Display(OVER)");
+    //qDebug() << tr("Button::enterEvent");
+  }
+
+  void Button::leaveEvent(QEvent *event)
+  {
+    timer->stop();
+    timer->setInterval(fadeTimeOut / fps);
+    timer->start();
+
+    isOver = false;
+    switch (buttonState)
+    {
+    case OFF: buttonDisplay = NORMAL; break;
+    case ON: buttonDisplay = PRESSED; break;
+    }
+
+    //qDebug("Button Display(NORMAL)");
+    //qDebug() << tr("Button (%1, icon: %2)::leaveEvent");
+  }
+
+  Button::~Button() {	}
 }

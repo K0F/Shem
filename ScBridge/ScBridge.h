@@ -1,6 +1,9 @@
 #ifndef SCBRIDGE_H
 #define SCBRIDGE_H
 
+//#include "UDPServer.h"
+
+#include <QtWidgets/QApplication>
 #include <QAction>
 #include <QByteArray>
 #include <QDateTime>
@@ -11,54 +14,105 @@
 #include <QtNetwork/QLocalSocket>
 #include <QtNetwork/QLocalServer>
 #include <QBuffer>
+#include <QDebug>
+#include <QQueue>
+#include <QTimer>
 
 namespace SupercolliderBridge
 {
+  enum class StateInterpret{ OFF, RUNNING };
+  enum class StateServer{ OFF, RUNNING };
+  enum class MessageType{ ERROR, WARNING, STATUS, EVAULATE, RESULT, ANSWER };
 
-	class ScBridge : public QProcess
-	{
-		Q_OBJECT
+  class ScBridge : public QProcess
+  {
+    Q_OBJECT
 
-	public:
-		ScBridge(QObject *parent);
-		~ScBridge();
-		
-	public slots:
-		void startLang();
-		void killLang();
-		void startServer();
-		void killServer();
-		void evaluateCode(QString const & commandString, bool silent = false);
+  public:
+    ScBridge(QObject *parent);
+    ~ScBridge();
 
-	signals:
-		void bootedLang(bool);
-		void bootedServer(bool);
+    StateInterpret stateInterpret;
+    StateServer stateServer;
 
-		void scPost(QString const &);
-		void statusMessage(QString const &);
-		//void response(const QString & selector, const QString & data);
+    QString nextID();
+    float tempo;
+    int beat;
+    bool evaluate(QString code, bool print = false, bool silent = false);
+    QVariant question(QString code, bool print = false);
 
+    void initOSC();
 
-	private slots:
-		void onReadyRead(void);
-		//void testStart();
+    private slots:
+    void onReadyRead(void);
+    void onNewIpcConnection();
+    void finalizeConnection();
+    void onIpcData();
 
-	private:
-		QLocalServer *mIpcServer;
-		QLocalSocket *mIpcSocket;
-		QString mIpcServerName;
-		QByteArray mIpcData;
+    void killBridge();
+    void changeInterpretState();
+    void changeServerState();
 
-		bool mTerminationRequested;
-		QDateTime mTerminationRequestTime;
-		bool mCompiled;
+    void onChangeTempo(QString BPM);
 
-		
-	};
+  signals:
+    void interpretBootInitAct();
+    void interpretBootDoneAct();
+    void interpretKillInitAct();
+    void interpretKillDoneAct();
+
+    void serverBootInitAct();
+    void serverBootDoneAct();
+    void serverKillInitAct();
+    void serverKillDoneAct();
+
+    void msgErrorAct(QString const &);
+    void msgWarningAct(QString const &);
+    void msgNormalAct(QString const &);
+    void msgStatusAct(QString const &);
+    void msgEvaluateAct(QString const &);
+    void msgResultAct(QString const &);
+    void msgBundleAct(QString const &);
+
+    void actSynced();
+    void actAnswered();
+    void actServerStatus(QStringList); // serverPeak, cntSynths, cntGroups
+    void actNextBeat(int beat);
+    void actTempoChanged();
+
+    void actGroupAdd(int ID);
+    void actGroupFree(int ID);
+    void actSynthAdd(int ID);
+    void actSynthFree(int ID);
+
+    void killBridgeDoneAct();
+
+    //void response(const QString & selector, const QString & data);
+
+  private:
+    QLocalServer *mIpcServer;
+    QLocalSocket *mIpcSocket;
+    QString mIpcServerName;
+    QByteArray mIpcData;
+
+    int lateFlagBreakTime;
+    bool mTerminationRequested;
+    QDateTime mTerminationRequestTime;
+    bool mCompiled;
+
+    void startInterpretr();
+    void killInterpreter();
+
+    void msgFilter(QString msg);
+
+    void onResponse(const QString & selector, const QString & data);
+
+        //QStringList answer;
+    QVariant answer;
+  };
 
 }
 
 #endif // SCBRIDGE
 
 
-	

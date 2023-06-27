@@ -1,5 +1,14 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
-    <file alias="logo128.png">Resources/QntLogo128pxBlack.png</file>
-</qresource>
+    <file alias="logo32.png">Resources/LogoQuant_32px.png</file>
+    <file alias="lang_32px.png">Resources/lang_32px.png</file>
+    <file alias="server_32px.png">Resources/server_32px.png</file>    
+    <file alias="lang_16px.png">Resources/lang_16px.png</file>
+    <file alias="server_16px.png">Resources/server_16px.png</file>
+    <file alias="console_16px.png">Resources/console_16px.png</file>
+    <file alias="customize_16px.png">Resources/customize_16px.png</file>
+    <file alias="network_16px.png">Resources/network_16px.png</file>    
+    <file alias="fontText.ttf">Resources/UniversCondensed.ttf</file>
+    <file alias="fontConsole.ttf">Resources/Univers_57_condensed.ttf</file>
+   </qresource>
 </RCC>

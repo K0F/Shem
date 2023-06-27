@@ -1,34 +1,34 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
-//#include <QtWidgets/QMainWindow>
-//#include <QtWidgets/QDockWidget>
-#include <QtGui>
+#include "Panel.h"
+#include <QWidget>
 #include <QTextEdit>
+#include <QScrollBar>
 
 namespace Jui
 {
-
-	class Console : public QTextEdit
+	class Console : public Panel
 	{
 		Q_OBJECT
 
 	public:
 		Console(QWidget *parent);
-
-		//void addLine(QString &text);
-
 		~Console();
 
-		public slots:
-		void addLine(QString newLine);
+		void setFont(QFont);
+		void setColorText(QColor);
+  void setColorBackground(QColor);
+		
+	public slots:
+		void addText(QString text, QColor color, bool newLine );
+		//void fitGeometry();
 
 	protected:
-		//void paintEvent(QPaintEvent *event);
+		void resizeEvent(QResizeEvent *event);
 
 	private:
 		QTextEdit *text;
-
 	};
 
 }

@@ -7,57 +7,81 @@
 #include <QTimer>
 #include <QDebug>
 
+#include <QMouseEvent>
+
 namespace Jui
 {
 
-	class Button : public QWidget
-	{
-		Q_OBJECT
+  class Button : public QWidget
+  {
+    Q_OBJECT
 
-	public:
-		Button(QWidget *parent);
-		~Button();
+  public:
+    Button(QWidget *parent);
+    ~Button();
 
-		QRectF boundingRect() const;
+    enum State { OFF, ON };
+    enum StateDisplay { NORMAL, OVER, PRESSED };
+    enum StateKeeping { TOUCH, HOLD, SWITCH };
 
-		void setIconPath(QString path);
-		void setName(QString name);
+    QRect bounds();
 
-	protected:
-		void paintEvent(QPaintEvent *);
+    void setState(State);
+    void setStateKeeping(StateKeeping);
+    void setIcon(QImage, int);
+    void setText(QString name);
+    void setFont(QFont);
+    void setColorNormal(QColor);
+    void setColorOver(QColor);
+    void setColorActive(QColor);
+    void setButtonGroup(QList<Button *> other);
 
-	private:
-		bool isPressed, isOver;
+  signals:
+    void pressAct();
+    void actPressed(Button::State);
+    //void enterAct(QString name);
+    //void leaveAct(QString name);
 
-		QString *name;
+    public slots:
+    void fadeRatio();
+    void onSwitchOFF();
 
-		QString iconPath;
+  protected:
+    void paintEvent(QPaintEvent *);
 
-		void prepisePopisek();
+  private:
+    State buttonState;
+    StateDisplay buttonDisplay;
+    StateKeeping buttonKeeping;
 
-		void mousePressEvent(QMouseEvent *event);
-		void mouseReleaseEvent(QMouseEvent *event);
-		void enterEvent(QEvent *event);
-		void leaveEvent(QEvent *event);
+    bool isPressed, isOver;
 
-		void addAction();
-		int fadeTimeIn;
-		int fadeTimeOut;
-		int fps;
-		int backgroundAlpha;
+    QString name;
+    QFont fontText;
+    QImage icon;
+    QColor normalColor, overColor, activeColor;
+    QColor blendColor(QColor, QColor, qreal);
+    QColor penColor, fillColor;
+    int iconOffset;
 
-		QTimer *timer;
+    void mousePressEvent(QMouseEvent *mouseEvent);
+    void mouseReleaseEvent(QMouseEvent *mouseEvent);
+    void enterEvent(QEvent *event);
+    void leaveEvent(QEvent *event);
 
-	signals:
-		void pressAct();
-		void enterAct(QString name);
-		void leaveAct(QString name);
+    //void addAction();
+    int fadeTimeIn;
+    int fadeTimeOut;
+    int fps;
+    //int backgroundAlpha;
+    double ratio;
 
-		public slots:
-		void alphaUpdate();
+    QTimer *timer;
 
 
-	};
+
+
+  };
 
 }
 #endif // BUTTON_H

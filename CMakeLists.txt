@@ -4,20 +4,24 @@ PROJECT (Shem)
 
 CMAKE_MINIMUM_REQUIRED ( VERSION 3.4 )
 
-SET(CMAKE_AUTOMOC ON)
-SET(CMAKE_AUTORCC ON)
+#SET(CMAKE_AUTOMOC ON)
+#SET(CMAKE_AUTORCC ON)
 
 MESSAGE(STATUS "\nShem init...")
 
 ### Compiler setup ########################
 
 IF(CMAKE_GENERATOR MATCHES "Visual Studio 12 2013")
-    SET(CMAKE_CONFIGURATION_TYPES Release)
+    SET(CMAKE_CONFIGURATION_TYPES Debug Release)
     SET(CMAKE_CONFIGURATION_TYPES "${CMAKE_CONFIGURATION_TYPES}" CACHE STRING
         "Reset the configurations to what we need/support"
         FORCE
     )
 ENDIF()
+
+if(CMAKE_COMPILER_IS_GNUCXX)
+      add_definitions(-std=c++11)
+    endif()
 
 ### Modules setup ########################
 
@@ -52,13 +56,14 @@ ENDFOREACH(ONE_BRGLINK)
 
 ### Project semaphore ########################
 
-OPTION(Build_Demo "Build basic example of using ScBridge" ON)
+OPTION(Build_Demo "Build basic example of using ScBridge" OFF)
 IF(Build_Demo)
 	MESSAGE(STATUS "Building the Demo")
 	ADD_SUBDIRECTORY(Demo)
 ENDIF()
 
-OPTION(Build_Quant "Build project Quant" OFF)
+
+OPTION(Build_Quant "Build project Quant" ON)
 IF(Build_Quant)
 	MESSAGE(STATUS "Building the Quant IDE")
 	ADD_SUBDIRECTORY(Quant)
