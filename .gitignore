@@ -53,3 +53,10 @@ Temporary Items
 Build folder
 # =========================
 build/
+
+# Android build outputs
+*.apk
+android/.gradle/
+android/app/build/
+android/app/.cxx/
+android/local.properties

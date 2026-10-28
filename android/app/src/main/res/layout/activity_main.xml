@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#141416">
+
+    <!-- Top Header Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="38dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:background="#202024">
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SHEM v0.3.9"
+            android:textColor="#aac8a0"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:id="@+id/tv_author"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" | Author: Jáchym Pešek"
+            android:textColor="#8899aa"
+            android:textSize="11sp"
+            android:layout_marginStart="4dp"
+            android:includeFontPadding="false" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/btn_lang"
+            android:layout_width="wrap_content"
+            android:layout_height="26dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:text="LANG: ON"
+            android:textSize="10sp"
+            android:textColor="#141416"
+            android:stateListAnimator="@null"
+            android:includeFontPadding="false"
+            android:textAllCaps="false"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btn_server"
+            android:layout_width="wrap_content"
+            android:layout_height="26dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:text="SERVER: ON"
+            android:textSize="10sp"
+            android:textColor="#141416"
+            android:stateListAnimator="@null"
+            android:includeFontPadding="false"
+            android:textAllCaps="false"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:layout_marginEnd="6dp" />
+
+        <TextView
+            android:id="@+id/tv_status_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="124 BPM | Beat: 0 | Synths: 3 | -12 dB | CPU: 3%"
+            android:textColor="#e6821e"
+            android:textSize="11sp"
+            android:includeFontPadding="false" />
+
+    </LinearLayout>
+
+    <!-- Main Workspace (Landscape Split) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+
+        <!-- Left Pane: Code Editor + Quick Symbol Bar -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.15"
+            android:orientation="vertical"
+            android:background="#161618">
+
+            <!-- Ergonomic Quick Symbol Toolbar -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="34dp"
+                android:scrollbars="none"
+                android:background="#1c1c20">
+
+                <LinearLayout
+                    android:id="@+id/toolbar_symbols"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp" />
+
+            </HorizontalScrollView>
+
+            <!-- Monospace Live-Code Editor -->
+            <org.kof.shem.LiveCodeEditor
+                android:id="@+id/code_editor"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="top|start"
+                android:inputType="textMultiLine|textNoSuggestions"
+                android:imeOptions="flagNoExtractUi" />
+
+        </LinearLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="#28282c" />
+
+        <!-- Right Pane: Nodes Panel + Interactive Control Envelope -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.85"
+            android:orientation="vertical"
+            android:background="#18181b">
+
+            <!-- Envelope Selector Bar (Nodes & Presets) -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:scrollbars="none"
+                android:background="#1c1c20">
+
+                <LinearLayout
+                    android:id="@+id/toolbar_envelope"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp" />
+
+            </HorizontalScrollView>
+
+            <!-- Interactive Envelope Canvas -->
+            <org.kof.shem.ControlEnvelopeView
+                android:id="@+id/envelope_view"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1.1" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#28282c" />
+
+            <!-- Active Nodes List Header & Content -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="0.9"
+                android:orientation="vertical"
+                android:padding="6dp">
+
+                <TextView
+                    android:id="@+id/tv_nodes_header"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ACTIVE NODES (NodePanel)"
+                    android:textColor="#468cd2"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:includeFontPadding="false" />
+
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="4dp">
+
+                    <LinearLayout
+                        android:id="@+id/panel_nodes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+
+                </ScrollView>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Bottom Shem Console -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:background="#101012">
+
+        <TextView
+            android:id="@+id/tv_console_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CONSOLE:"
+            android:textColor="#787878"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:layout_marginEnd="6dp"
+            android:includeFontPadding="false" />
+
+        <HorizontalScrollView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:scrollbars="none">
+
+            <TextView
+                android:id="@+id/tv_console"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-> Shem live coding environment ready."
+                android:textColor="#aac8a0"
+                android:textSize="11sp"
+                android:fontFamily="monospace"
+                android:includeFontPadding="false" />
+
+        </HorizontalScrollView>
+
+    </LinearLayout>
+
+</LinearLayout>
